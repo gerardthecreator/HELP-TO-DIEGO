@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Engine Pro - Z=60 e Iones</title>
+    <style>
+        :root {
+            --bg-dark: #060913;
+            --bg-surface: #111726;
+            --bg-input: #192035;
+            --neon-blue: #00f2fe;
+            --neon-purple: #9b51e0;
+            --text-white: #ffffff;
+            --text-gray: #6b7c96;
+            --spin-up: #00ff88;
+            --spin-down: #ff3366;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-white);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 14px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+                /* CONTINUACIÓN DE ESTILOS - BLOQUE 2 */
+        header { text-align: center; margin-bottom: 2px; }
+        header h1 { font-size: 1.4rem; color: var(--neon-blue); text-shadow: 0 0 10px rgba(0, 242, 254, 0.3); font-weight: 800; }
+        header p { font-size: 0.75rem; color: var(--text-gray); }
+
+        .card {
+            background: var(--bg-surface);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid #1f2a45;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Panel de Control Dual: Z y Carga */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-size: 0.75rem; font-weight: bold; color: var(--text-gray); }
+        
+        .input-group input, .input-group select {
+            background: var(--bg-input);
+            border: 1px solid #2e3d5e;
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-white);
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
+        }
+
+        .input-group input:focus, .input-group select:focus { border-color: var(--neon-blue); }
+
+        .btn-action {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: transform 0.1s;
+        }
+        .btn-action:active { transform: scale(0.97); }
+
+        /* Información del Ion/Elemento */
+        .ion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #253352;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        .ion-title { font-size: 1.15rem; font-weight: 700; }
+        .ion-subtitle { font-size: 0.8rem; color: var(--text-gray); }
+        .config-text { font-size: 0.85rem; color: var(--neon-purple); font-weight: 600; word-break: break-all; margin-top: 4px; }
+
+        /* Cuadrícula Cuántica */
+        .quantum-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+        .quantum-card { background: var(--bg-input); border-radius: 8px; padding: 8px 2px; text-align: center; border: 1px solid #253352; }
+        .quantum-card .lbl { font-size: 0.65rem; color: var(--text-gray); display: block; margin-bottom: 2px; }
+        .quantum-card .num { font-size: 1.1rem; font-weight: 800; color: var(--neon-blue); }
+
+        /* Contenedor de Subniveles */
+        .orbitals-box { display: flex; flex-direction: column-reverse; gap: 12px; margin-top: 8px; }
+        
+        /* Fila del Subnivel con Flex-Wrap Inteligente para evitar desbordes */
+        .sublevel-line {
+            display: flex;
+            align-items: center;
+            background: rgba(25, 32, 53, 0.3);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #1c263d;
+        }
+        .sublevel-tag { width: 50px; font-size: 0.85rem; font-weight: 700; color: var(--neon-purple); }
+        .boxes-area { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+
+        /* Caja de Orbital Compacta para soportar hasta 7 cajas (bloque f) en vertical/horizontal */
+        .box-quantum {
+            width: 34px;
+            height: 34px;
+            border: 2px solid #2d3b5a;
+            background: var(--bg-input);
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+        }
+        .box-quantum.active { border-color: #3b82f6; }
+
+        .arrow-spin { font-size: 1.1rem; font-weight: 900; line-height: 1; user-select: none; }
+        .arrow-spin.u { color: var(--spin-up); text-shadow: 0 0 6px rgba(0,255,136,0.3); }
+        .arrow-spin.d { color: var(--spin-down); text-shadow: 0 0 6px rgba(255,51,102,0.3); }
+
+        .m-tag { position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); font-size: 0.55rem; color: var(--text-gray); font-weight: 700; }
+    </style>
+</head>
+<body>
+    <!-- CONTINUACIÓN DE LA ESTRUCTURA - BLOQUE 3 -->
+    <header>
+        <h1>QUANTUM ENGINE PRO</h1>
+        <p>Configuración Avanzada de Iones (Z = 1 hasta 60)</p>
+    </header>
+
+    <!-- Controles de Configuración Táctil -->
+    <div class="card">
+        <div class="controls-grid">
+            <div class="input-group">
+                <label for="z-input">Número Atómico (Z)</label>
+                <input type="number" id="z-input" min="1" max="60" value="11">
+            </div>
+            <div class="input-group">
+                <label for="carga-input">Carga Eléctrica</label>
+                <select id="carga-input">
+                    <option value="0">Átomo Neutro (0)</option>
+                    <option value="1">Catión (+1)</option>
+                    <option value="2">Catión (+2)</option>
+                    <option value="3">Catión (+3)</option>
+                    <option value="4">Catión (+4)</option>
+                    <option value="-1">Anión (-1)</option>
+                    <option value="-2">Anión (-2)</option>
+                    <option value="-3">Anión (-3)</option>
+                </select>
+            </div>
+            <button class="btn-action" onclick="procesarSistemaCuantico()">CALCULAR SISTEMA</button>
+        </div>
+    </div>
+
+    <!-- Visor de Datos Cuánticos del Ion -->
+    <div class="card">
+        <div class="ion-header">
+            <div>
+                <span class="ion-title" id="display-name">Sodio</span>
+                <span class="ion-subtitle" id="display-ion-type"> (Átomo Neutro)</span>
+            </div>
+            <div class="ion-subtitle" id="display-electrons">Electrones: 11</div>
+        </div>
+        <div class="config-text" id="display-config">1s² 2s² 2p⁶ 3s¹</div>
+
+        <div class="quantum-grid">
+            <div class="quantum-card"><span class="lbl">Principal (n)</span><span class="num" id="lbl-n">3</span></div>
+            <div class="quantum-card"><span class="lbl">Azimutal (l)</span><span class="num" id="lbl-l">0</span></div>
+            <div class="quantum-card"><span class="lbl">Magnético (m)</span><span class="num" id="lbl-m">0</span></div>
+            <div class="quantum-card"><span class="lbl">Espín (s)</span><span class="num" id="lbl-s">+½</span></div>
+        </div>
+    </div>
+
+    <!-- Panel de Representación de Orbitales -->
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 10px; letter-spacing: 0.5px;">DIAGRAMA DE ORBITALES (HUND)</h3>
+        <div class="orbitals-box" id="orbitals-container"></div>
+    </div>
+
+    <script>
+        // LA LÓGICA DE JAVASCRIPT CONTINUARÁ EN EL BLOQUE 4
+        // LÓGICA DE JAVASCRIPT - BLOQUE 4
+        // Base de datos expandida de elementos químicos (Z = 1 hasta 60)
+        const elementosQuimicos = {
+            1:"Hidrógeno", 2:"Helio", 3:"Litio", 4:"Berilio", 5:"Boro", 6:"Carbono", 7:"Nitrógeno", 8:"Oxígeno", 9:"Flúor", 10:"Neón",
+            11:"Sodio", 12:"Magnesio", 13:"Aluminio", 14:"Silicio", 15:"Fósforo", 16:"Azufre", 17:"Cloro", 18:"Argón", 19:"Potasio", 20:"Calcio",
+            21:"Escandio", 22:"Titanio", 23:"Vanadio", 24:"Cromo", 25:"Manganeso", 26:"Hierro", 27:"Cobalto", 28:"Níquel", 29:"Cobre", 30:"Zinc",
+            31:"Galio", 32:"Germanio", 33:"Arsénico", 34:"Selenio", 35:"Bromo", 36:"Kriptón", 37:"Rubidio", 38:"Estroncio", 39:"Itrio", 40:"Zirconio",
+            41:"Niobio", 42:"Molibdeno", 43:"Tecnecio", 44:"Rutenio", 45:"Rodio", 46:"Paladio", 47:"Plata", 48:"Cadmio", 49:"Indio", 50:"Estaño",
+            51:"Antimonio", 52:"Telurio", 53:"Yodo", 54:"Xenón", 55:"Cesio", 56:"Bario", 57:"Lantano", 58:"Cerio", 59:"Praseodimio", 60:"Neodimio"
+        };
+
+        // Secuencia exacta de la Regla de las Diagonales (Moeller / Aufbau) hasta Z=60
+        const secuenciaAufbau = [
+            { n: 1, tipo: 's', l: 0, max: 2 },
+            { n: 2, tipo: 's', l: 0, max: 2 },
+            { n: 2, tipo: 'p', l: 1, max: 6 },
+            { n: 3, tipo: 's', l: 0, max: 2 },
+            { n: 3, tipo: 'p', l: 1, max: 6 },
+            { n: 4, tipo: 's', l: 0, max: 2 },
+            { n: 3, tipo: 'd', l: 2, max: 10 },
+            { n: 4, tipo: 'p', l: 1, max: 6 },
+            { n: 5, tipo: 's', l: 0, max: 2 },
+            { n: 4, tipo: 'd', l: 2, max: 10 },
+            { n: 5, tipo: 'p', l: 1, max: 6 },
+            { n: 6, tipo: 's', l: 0, max: 2 },
+            { n: 4, tipo: 'f', l: 3, max: 14 }
+        ];
+
+        // Función algorítmica para distribuir electrones en subniveles
+        function calcularDistribucion(totalElectrones) {
+            let restantes = totalElectrones;
+            let distribución = [];
+
+            for (let i = 0; i < secuenciaAufbau.length; i++) {
+                if (restantes <= 0) break;
+                
+                let subnivel = secuenciaAufbau[i];
+                let electronesEnSubnivel = Math.min(subnivel.max, restantes);
+
+                distribución.push({
+                    label: `${subnivel.n}${subnivel.tipo}`,
+                    n: subnivel.n,
+                    tipo: subnivel.tipo,
+                    l: subnivel.l,
+                    max: subnivel.max,
+                    electrones: electronesEnSubnivel
+                });
+
+                restantes -= electronesEnSubnivel;
+            }
+            return distribución;
+        }
+        // LÓGICA DE JAVASCRIPT - BLOQUE 5
+        // Algoritmo matemático para deducir los 4 números cuánticos del electrón diferenciador
+        function extraerNumerosCuanticos(ultimaCapa) {
+            const n = ultimaCapa.n;
+            const l = ultimaCapa.l;
+            const eEnSubnivel = ultimaCapa.electrones;
+            const numCajas = ultimaCapa.max / 2;
+
+            let m = 0;
+            let s = "+½";
+
+            if (ultimaCapa.tipo === 's') {
+                m = 0;
+                s = (eEnSubnivel === 1) ? "+½" : "-½";
+            } else {
+                // Regla de Hund para subniveles p (3 cajas), d (5 cajas) y f (7 cajas)
+                if (eEnSubnivel <= numCajas) {
+                    // Primer ciclo de llenado: espines positivos (↑) de izquierda a derecha
+                    m = -l + (eEnSubnivel - 1);
+                    s = "+½";
+                } else {
+                    // Segundo ciclo de llenado: espines negativos (↓) apareando celdas
+                    m = -l + (eEnSubnivel - numCajas - 1);
+                    s = "-½";
+                }
+            }
+
+            return { n, l, m, s };
+        }
+
+        // Orquestador Principal que procesa los cambios de Z y la Carga Neta
+        function procesarSistemaCuantico() {
+            const inputZ = document.getElementById('z-input');
+            const selectCarga = document.getElementById('carga-input');
+
+            let z = parseInt(inputZ.value);
+            let carga = parseInt(selectCarga.value);
+
+            // Validaciones numéricas de seguridad para el hardware del Spark 10 Pro
+            if (isNaN(z) || z < 1) z = 1;
+            if (z > 60) z = 60;
+            inputZ.value = z;
+
+            // Determinar la cantidad neta de electrones finales (Z - Carga)
+            let totalElectrones = z - carga;
+            if (totalElectrones < 0) totalElectrones = 0;
+
+            // Actualizar textos e información del elemento en la interfaz
+            const nombreElemento = elementosQuimicos[z] || "Desconocido";
+            document.getElementById('display-name').textContent = nombreElemento + ` (Z = ${z})`;
+            document.getElementById('display-electrons').textContent = `Electrones: ${totalElectrones}`;
+
+            let tipoTexto = "Átomo Neutro";
+            if (carga > 0) tipoTexto = `Catión (${carga}+)`;
+            if (carga < 0) tipoTexto = `Anión (${Math.abs(carga)}-)`;
+            document.getElementById('display-ion-type').textContent = ` • ${tipoTexto}`;
+
+            // Validar estado de corte total de electrones (ión completamente desnudado)
+            if (totalElectrones === 0) {
+                document.getElementById('display-config').innerHTML = "Sin electrones (Núcleo aislado)";
+                document.getElementById('lbl-n').textContent = "0";
+                document.getElementById('lbl-l').textContent = "0";
+                document.getElementById('lbl-m').textContent = "0";
+                document.getElementById('lbl-s').textContent = "0";
+                document.getElementById('orbitals-container').innerHTML = "";
+                return;
+            }
+
+            // Calcular distribución en los subniveles químicos
+            const distribucion = calcularDistribucion(totalElectrones);
+            
+            // Renderizar la configuración en formato de texto con superíndices
+            let textoConfig = distribucion.map(c => `${c.label}<sup>${c.electrones}</sup>`).join(' ');
+            document.getElementById('display-config').innerHTML = textoConfig;
+
+            // Extraer números cuánticos a partir del subnivel de parada
+            const ultimaCapa = distribucion[distribucion.length - 1];
+            const cuanticos = extraerNumerosCuanticos(ultimaCapa);
+
+            // Inyectar los valores numéricos calculados en los contenedores visuales
+            document.getElementById('lbl-n').textContent = cuanticos.n;
+            document.getElementById('lbl-l').textContent = cuanticos.l;
+            document.getElementById('lbl-m').textContent = cuanticos.m >= 0 ? `+${cuanticos.m}` : cuanticos.m;
+            document.getElementById('lbl-s').textContent = cuanticos.s;
+
+            // Llamada al motor de dibujo que se define en el Bloque 6
+            renderizarEstructuraBloques(distribucion);
+        }
+        // LÓGICA DE JAVASCRIPT - BLOQUE 6 (CORREGIDO)
+        // Motor gráfico para pintar y estructurar los bloques orbitales s, p, d y f
+        function renderizarEstructuraBloques(distribucion) {
+            const contenedor = document.getElementById('orbitals-container');
+            contenedor.innerHTML = ""; // Liberar memoria del navegador móvil
+
+            const fragmentoVirtual = document.createDocumentFragment();
+
+            distribucion.forEach(sub => {
+                const fila = document.createElement('div');
+                fila.className = 'sublevel-line';
+
+                // Indicador del subnivel actual (ej: 3d)
+                const etiqueta = document.createElement('div');
+                etiqueta.className = 'sublevel-tag';
+                etiqueta.textContent = `${sub.label}${convertirAExponentes(sub.electrones)}`;
+                fila.appendChild(etiqueta);
+
+                // Zona contenedora de cajas
+                const areaCajas = document.createElement('div');
+                areaCajas.className = 'boxes-area';
+
+                let numCajas = sub.max / 2;
+                let conteoEspines = new Array(numCajas).fill(0);
+
+                // Algoritmo Hund: Inyección secuencial de electrones por capas de energía
+                let acumulados = 0;
+                // Primera ronda: Espines positivos (↑)
+                for (let i = 0; i < numCajas && acumulados < sub.electrones; i++) {
+                    conteoEspines[i]++;
+                    acumulados++; // SE CORRIGIÓ EL ERROR TIPOGRÁFICO AQUÍ
+                }
+                // Segunda ronda: Espines negativos (↓)
+                for (let i = 0; i < numCajas && acumulados < sub.electrones; i++) {
+                    conteoEspines[i]++;
+                    acumulados++; // SE CORRIGIÓ EL ERROR TIPOGRÁFICO AQUÍ
+                }
+
+                // Fabricar cajas individuales en base a los espines calculados
+                for (let i = 0; i < numCajas; i++) {
+                    const caja = document.createElement('div');
+                    caja.className = 'box-quantum active';
+
+                    // Calcular la etiqueta magnética m dependiente de la posición de la celda
+                    let mCalculado = (sub.tipo === 's') ? 0 : -sub.l + i;
+                    caja.innerHTML = `<span class="m-tag">${mCalculado >= 0 ? '+' : ''}${mCalculado}</span>`;
+
+                    if (conteoEspines[i] >= 1) {
+                        caja.innerHTML += `<span class="arrow-spin u">↑</span>`;
+                    }
+                    if (conteoEspines[i] === 2) {
+                        caja.innerHTML += `<span class="arrow-spin d">↓</span>`;
+                    }
+
+                    areaCajas.appendChild(caja);
+                }
+
+                fila.appendChild(areaCajas);
+                fragmentoVirtual.appendChild(fila);
+            });
+
+            contenedor.appendChild(fragmentoVirtual);
+        }
+
+        // Conversor numérico a texto formateado en superíndice
+        function convertirAExponentes(numero) {
+            const exponentes = { 
+                '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', 
+                '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '10': '¹⁰',
+                '11': '¹¹', '12': '¹²', '13': '¹³', '14': '¹⁴' 
+            };
+            return exponentes[numero] || numero;
+        }
+
+        // Inicialización del sistema automatizado en el arranque
+        window.onload = () => {
+            procesarSistemaCuantico();
+        };
+    </script>
+</body>
+</html>
