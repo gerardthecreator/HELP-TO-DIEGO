@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master en Propiedades Periódicas</title>
+    <style>
+        :root {
+            --bg-deep: #0b0f19;
+            --bg-card: #171e30;
+            --bg-element: #222c43;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-amber: #f59e0b;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        /* CONTINUACIÓN DE ESTILOS - BLOQUE 2 */
+        h1 { margin: 10px 0; color: var(--accent-cyan); text-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .workspace { display: flex; flex-direction: column; gap: 20px; }
+
+        /* Panel Superior Modular */
+        .module-card {
+            background: var(--bg-card);
+            border: 1px solid #2d3a54;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        
+        .btn {
+            background: var(--bg-element);
+            color: var(--text-main);
+            border: 1px solid #3b4f74;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn:hover { background: #2e3d5e; transform: translateY(-1px); }
+        .btn.active {
+            background: var(--accent-cyan);
+            color: var(--bg-deep);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        /* Guía Paso a Paso */
+        .step-wizard {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f1626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid var(--accent-amber);
+        }
+
+        /* Contenedor Tabla */
+        .table-outer {
+            position: relative;
+            background: var(--bg-card);
+            padding: 50px 60px 40px 50px;
+            border-radius: 12px;
+            border: 1px solid #2d3a54;
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 52px);
+            grid-template-rows: repeat(7, 52px);
+            gap: 4px;
+        }
+
+        .element {
+            background: var(--bg-element);
+            border: 1px solid #2d3a54;
+            border-radius: 6px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .element:hover { transform: scale(1.15); z-index: 10; box-shadow: 0 0 15px rgba(255,255,255,0.25); }
+        .element.highlight { animation: pulseGlow 1.5s infinite alternate; }
+        
+        .element .num { font-size: 0.65rem; color: var(--text-muted); }
+        .element .sym { font-size: 1.1rem; font-weight: bold; text-align: center; }
+        .element .val { font-size: 0.6rem; text-align: center; color: var(--accent-cyan); font-weight: 500; }
+
+        /* Sistema de Flechas Avanzado */
+        .arrows-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .arrow-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, var(--accent-emerald));
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px var(--accent-emerald);
+        }
+
+        /* Animaciones según propiedad */
+        .periodic-table[data-view="derecha"] ~ .arrows-container .arrow-h-inc { opacity: 1; transform: scale(1); }
+        .periodic-table[data-view="arriba"] ~ .arrows-container .arrow-v-inc { opacity: 1; transform: scale(1); }
+        .periodic-table[data-view="izquierda"] ~ .arrows-container .arrow-h-dec { opacity: 1; transform: scale(1); }
+        .periodic-table[data-view="abajo"] ~ .arrows-container .arrow-v-dec { opacity: 1; transform: scale(1); }
+
+        .arrow-h-inc { top: 15px; left: 60px; right: 80px; height: 16px; background: linear-gradient(90deg, #10b98100, var(--accent-emerald)); }
+        .arrow-h-inc::after { content: '➔'; position: absolute; right: -8px; top: -5px; font-size: 1.3rem; color: var(--accent-emerald); }
+
+        .arrow-h-dec { top: 15px; left: 60px; right: 80px; height: 16px; background: linear-gradient(-90deg, #10b98100, var(--accent-amber)); box-shadow: 0 0 10px var(--accent-amber); }
+        .arrow-h-dec::after { content: '➔'; position: absolute; left: -8px; top: -5px; font-size: 1.3rem; color: var(--accent-amber); transform: rotate(180deg); }
+
+        .arrow-v-inc { right: 20px; top: 60px; bottom: 60px; width: 16px; background: linear-gradient(0deg, #10b98100, var(--accent-emerald)); }
+        .arrow-v-inc::after { content: '➔'; position: absolute; top: -12px; left: -3px; font-size: 1.3rem; color: var(--accent-emerald); transform: rotate(-90deg); }
+
+        .arrow-v-dec { right: 20px; top: 60px; bottom: 60px; width: 16px; background: linear-gradient(180deg, #10b98100, var(--accent-amber)); box-shadow: 0 0 10px var(--accent-amber); }
+        .arrow-v-dec::after { content: '➔'; position: absolute; bottom: -12px; left: -3px; font-size: 1.3rem; color: var(--accent-amber); transform: rotate(90deg); }
+
+        /* Panel Lateral del Mini-juego */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        
+        .quiz-zone { background: #1a233a; border: 2px dashed #3b4f74; border-radius: 12px; padding: 15px; }
+        .quiz-slots { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        
+        .quiz-item {
+            background: var(--bg-element);
+            border: 1px solid #3b4f74;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .quiz-item:active { cursor: grabbing; opacity: 0.6; }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 5px var(--accent-cyan); border-color: var(--accent-cyan); }
+            100% { box-shadow: 0 0 20px var(--accent-cyan); border-color: #fff; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Master en Propiedades Electrónicas Periódicas</h1>
+    
+    <div class="main-layout">
+        <div class="workspace">
+            <!-- Módulo Exploratorio y Tutorial -->
+            <div class="module-card">
+                <div class="controls">
+                    <button class="btn" id="btn-eneg" onclick="startPropiedad('electronegatividad')">Electronegatividad</button>
+                    <button class="btn" id="btn-rad" onclick="startPropiedad('radio')">Radio Atómico</button>
+                    <button class="btn" id="btn-ion" onclick="startPropiedad('ionizacion')">Energía de Ionización</button>
+                </div>
+                <div class="step-wizard" id="wizard-box">
+                    <button class="btn" id="btn-prev" onclick="changeStep(-1)" disabled>◀</button>
+                    <span id="step-text">Selecciona una propiedad para activar el tutorial interactivo paso a paso.</span>
+                    <button class="btn" id="btn-next" onclick="changeStep(1)" disabled>▶</button>
+                </div>
+            </div>
+
+            <!-- Contenedor Gráfico de la Tabla -->
+            <div class="table-outer">
+                <div id="tabla" class="periodic-table"></div>
+                <div class="arrows-container">
+                    <div class="arrow-line arrow-h-inc">AUMENTA EL VALOR</div>
+                    <div class="arrow-line arrow-h-dec">AUMENTA EL VALOR</div>
+                    <div class="arrow-line arrow-v-inc">AUMENTA EL VALOR</div>
+                    <div class="arrow-line arrow-v-dec">AUMENTA EL VALOR</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral Informativo y Juego de Preguntas -->
+        <div class="sidebar">
+            <div class="module-card" id="detail-panel">
+                <h3>Detalles del Elemento</h3>
+                <p style="color: var(--text-muted); margin-top: 10px;">Haz clic en cualquier celda para descomponer su estructura electrónica.</p>
+            </div>
+            
+            <div class="module-card quiz-zone">
+                <h3>Desafío de Ordenamiento</h3>
+                <p id="quiz-instruction" style="font-size: 0.85rem; margin-top: 5px; color: var(--accent-amber);">Cargando juego...</p>
+                <div class="quiz-slots" id="quiz-container"></div>
+                <button class="btn active" style="width: 100%;" onclick="verificarRespuesta()">Validar Orden</button>
+                <p id="quiz-feedback" style="margin-top: 10px; font-weight: bold; text-align: center;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // La lógica del motor de juego, renderizado y tutorial se desarrollarán en el Bloque 3
+        // DATOS DE LOS ELEMENTOS (Optimizados y estructurados para renderizado)
+        const elementos = [
+            { num: 1, sym: "H", name: "Hidrógeno", col: 1, row: 1, electronegatividad: 2.20, radio: 53, ionizacion: 1312 },
+            { num: 2, sym: "He", name: "Helio", col: 18, row: 1, electronegatividad: 0, radio: 31, ionizacion: 2372 },
+            { num: 3, sym: "Li", name: "Litio", col: 1, row: 2, electronegatividad: 0.98, radio: 167, ionizacion: 520 },
+            { num: 4, sym: "Be", name: "Berilio", col: 2, row: 2, electronegatividad: 1.57, radio: 112, ionizacion: 900 },
+            { num: 5, sym: "B", name: "Boro", col: 13, row: 2, electronegatividad: 2.04, radio: 87, ionizacion: 801 },
+            { num: 6, sym: "C", name: "Carbono", col: 14, row: 2, electronegatividad: 2.55, radio: 67, ionizacion: 1086 },
+            { num: 7, sym: "N", name: "Nitrógeno", col: 15, row: 2, electronegatividad: 3.04, radio: 56, ionizacion: 1402 },
+            { num: 8, sym: "O", name: "Oxígeno", col: 16, row: 2, electronegatividad: 3.44, radio: 48, ionizacion: 1314 },
+            { num: 9, sym: "F", name: "Flúor", col: 17, row: 2, electronegatividad: 3.98, radio: 42, ionizacion: 1681 },
+            { num: 10, sym: "Ne", name: "Neón", col: 18, row: 2, electronegatividad: 0, radio: 38, ionizacion: 2081 },
+            { num: 11, sym: "Na", name: "Sodio", col: 1, row: 3, electronegatividad: 0.93, radio: 190, ionizacion: 496 },
+            { num: 12, sym: "Mg", name: "Magnesio", col: 2, row: 3, electronegatividad: 1.31, radio: 145, ionizacion: 738 },
+            { num: 13, sym: "Al", name: "Aluminio", col: 13, row: 3, electronegatividad: 1.61, radio: 118, ionizacion: 578 },
+            { num: 14, sym: "Si", name: "Silicio", col: 14, row: 3, electronegatividad: 1.90, radio: 111, ionizacion: 786 },
+            { num: 15, sym: "P", name: "Fósforo", col: 15, row: 3, electronegatividad: 2.19, radio: 98, ionizacion: 1012 },
+            { num: 16, sym: "S", name: "Azufre", col: 16, row: 3, electronegatividad: 2.58, radio: 88, ionizacion: 1000 },
+            { num: 17, sym: "Cl", name: "Cloro", col: 17, row: 3, electronegatividad: 3.16, radio: 79, ionizacion: 1251 },
+            { num: 18, sym: "Ar", name: "Argón", col: 18, row: 3, electronegatividad: 0, radio: 71, ionizacion: 1521 }
+        ];
+
+        // DICCIONARIO PASO A PASO (Modular y escalable)
+        const pasosTutorial = {
+            electronegatividad: [
+                { texto: "Paso 1: La electronegatividad mide la fuerza para atraer electrones. Aumenta con fluidez de izquierda a derecha.", view: "derecha" },
+                { texto: "Paso 2: También se incrementa de abajo hacia arriba debido al menor blindaje del núcleo.", view: "arriba" },
+                { texto: "Paso FINAL: El Flúor (F) corona esta propiedad. Recuerda que los gases nobles son estables y no suelen puntuar.", view: "derecha" }
+            ],
+            radio: [
+                { texto: "Paso 1: El radio mide la distancia del núcleo al electrón externo. Crece hacia la izquierda por menor atracción de protones.", view: "izquierda" },
+                { texto: "Paso 2: Aumenta verticalmente hacia abajo debido a la incorporación de capas electrónicas adicionales.", view: "abajo" },
+                { texto: "Paso FINAL: Los metales alcalinos del fondo de los periodos destacan como los de mayor volumen atómico.", view: "izquierda" }
+            ],
+            ionizacion: [
+                { texto: "Paso 1: Es la energía requerida para extraer un electrón. Sube exponencialmente hacia la derecha.", view: "derecha" },
+                { texto: "Paso 2: Aumenta hacia arriba porque los electrones están estrechamente unidos al núcleo.", view: "arriba" },
+                { texto: "Paso FINAL: El Helio (He) representa la cima de la estabilidad; romper su estructura exige la máxima energía.", view: "arriba" }
+            ]
+        };
+
+        let propiedadActual = "";
+        let pasoActual = 0;
+        let listaTriviaActual = [];
+        let propiedadTrivia = "";
+        // Inicializar y renderizar celdas en la interfaz
+        const tabla = document.getElementById('tabla');
+        const fragmento = document.createDocumentFragment();
+
+        elementos.forEach(el => {
+            const div = document.createElement('div');
+            div.className = 'element';
+            div.style.gridColumn = el.col;
+            div.style.gridRow = el.row;
+            div.id = `el-${el.sym}`;
+            div.innerHTML = `<span class="num">${el.num}</span><span class="sym">${el.sym}</span><span class="val">-</span>`;
+            div.addEventListener('click', () => mostrarDetalle(el));
+            fragmento.appendChild(div);
+        });
+        tabla.appendChild(fragmento);
+
+        // Control del Asistente y Actualización Textual
+        function startPropiedad(prop) {
+            propiedadActual = prop;
+            pasoActual = 0;
+            
+            // Actualizar interfaz de botones activos
+            document.querySelectorAll('.controls .btn').forEach(b => b.classList.remove('active'));
+            const idBtn = prop === 'electronegatividad' ? 'btn-eneg' : prop === 'radio' ? 'btn-rad' : 'btn-ion';
+            document.getElementById(idBtn).classList.add('active');
+            
+            // Inyección de datos numéricos en las celdas de la tabla
+            elementos.forEach(el => {
+                const celda = document.getElementById(`el-${el.sym}`).querySelector('.val');
+                const sufijo = prop === 'radio' ? ' pm' : prop === 'ionizacion' ? ' kJ' : '';
+                celda.textContent = el[prop] !== 0 && el[prop] ? el[prop] + sufijo : 'N/A';
+            });
+
+            actualizarPaso();
+        }
+
+        function actualizarPaso() {
+            const pasos = pasosTutorial[propiedadActual];
+            const paso = pasos[pasoActual];
+            
+            document.getElementById('step-text').innerHTML = paso.texto;
+            tabla.setAttribute('data-view', paso.view);
+            
+            document.getElementById('btn-prev').disabled = pasoActual === 0;
+            document.getElementById('btn-next').disabled = pasoActual === pasos.length - 1;
+
+            // Gestión limpia de elementos destacados en la animación final
+            document.querySelectorAll('.element').forEach(e => e.classList.remove('highlight'));
+            if (pasoActual === pasos.length - 1) {
+                const targets = { electronegatividad: 'F', radio: 'Na', ionizacion: 'He' };
+                document.getElementById(`el-${targets[propiedadActual]}`).classList.add('highlight');
+            }
+        }
+
+        function changeStep(direccion) {
+            pasoActual += direccion;
+            actualizarPaso();
+        }
+
+        function mostrarDetalle(el) {
+            document.getElementById('detail-panel').innerHTML = `
+                <h3>${el.name} (${el.sym})</h3>
+                <p style="margin-top:10px;"><strong>Número Atómico:</strong> ${el.num}</p>
+                <p><strong>Electronegatividad:</strong> ${el.electronegatividad || 'N/A'}</p>
+                <p><strong>Radio Atómico:</strong> ${el.radio} pm</p>
+                <p><strong>Energía de Ionización:</strong> ${el.ionizacion} kJ/mol</p>
+            `;
+        }
+
+        // MOTOR DEL MINI-JUEGO DE PREGUNTAS (ORDENAMIENTO)
+        function generarPregunta() {
+            const props = ['electronegatividad', 'radio', 'ionizacion'];
+            propiedadTrivia = props[Math.floor(Math.random() * props.length)];
+            
+            const filtrados = elementos.filter(e => e[propiedadTrivia] > 0);
+            listaTriviaActual = [...filtrados].sort(() => 0.5 - Math.random()).slice(0, 4);
+
+            const titulos = { electronegatividad: "ELECTRONEGATIVIDAD", radio: "RADIO ATÓMICO", ionizacion: "ENERGÍA DE IONIZACIÓN" };
+            document.getElementById('quiz-instruction').innerHTML = `Ordena de <strong>MAYOR a MENOR</strong> según su: <br><span style="color:#fff; font-size:1rem;">${titulos[propiedadTrivia]}</span>`;
+
+            const listaMezclada = [...listaTriviaActual].sort(() => 0.5 - Math.random());
+            const contenedor = document.getElementById('quiz-container');
+            contenedor.innerHTML = "";
+
+            listaMezclada.forEach((el, index) => {
+                const item = document.createElement('div');
+                item.className = 'quiz-item';
+                item.draggable = true;
+                item.dataset.sym = el.sym;
+                item.innerHTML = `<span>${el.name} (${el.sym})</span> <span>☰</span>`;
+                
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    item.style.opacity = "0.4";
+                });
+                item.addEventListener('dragend', () => item.style.opacity = "1");
+                contenedor.appendChild(item);
+            });
+
+            // Lógica posicional por arrastre dentro del contenedor
+            contenedor.addEventListener('dragover', e => e.preventDefault());
+            contenedor.addEventListener('drop', e => {
+                e.preventDefault();
+                const draggingElement = document.querySelector('.quiz-item[style*="opacity: 0.4"]');
+                const targetElement = e.target.closest('.quiz-item');
+                if (draggingElement && targetElement && draggingElement !== targetElement) {
+                    const rect = targetElement.getBoundingClientRect();
+                    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+                    contenedor.insertBefore(draggingElement, next ? targetElement.nextSibling : targetElement);
+                }
+            });
+            document.getElementById('quiz-feedback').textContent = "";
+        }
+
+        function verificarRespuesta() {
+            const ordenUsuario = Array.from(document.querySelectorAll('.quiz-item')).map(item => item.dataset.sym);
+            const ordenCorrecto = [...listaTriviaActual].sort((a, b) => b[propiedadTrivia] - a[propiedadTrivia]).map(el => el.sym);
+            const feedback = document.getElementById('quiz-feedback');
+            
+            if (JSON.stringify(ordenUsuario) === JSON.stringify(ordenCorrecto)) {
+                feedback.style.color = "var(--accent-emerald)";
+                feedback.textContent = "¡Perfecto! El orden es impecable. ✨";
+                setTimeout(generarPregunta, 2500);
+            } else {
+                feedback.style.color = "var(--accent-rose)";
+                feedback.textContent = "Orden incorrecto. Desplaza los elementos e intenta de nuevo.";
+            }
+        }
+
+        // Carga inicial automatizada al abrir el navegador
+        window.onload = () => {
+            startPropiedad('electronegatividad');
+            generarPregunta();
+        };
+    </script>
+</body>
+</html>
